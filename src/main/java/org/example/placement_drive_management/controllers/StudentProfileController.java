@@ -11,6 +11,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -68,8 +69,18 @@ public class StudentProfileController {
     }
 
     @GetMapping("/allEligibleApplications")
-    @PreAuthorize("hasRole('ROLE_STUDENT')")
+    @PreAuthorize("hasAuthority('ROLE_STUDENT')")
     public ResponseEntity<List<ApplicationsDto>> getAllEligibleApplications(@AuthenticationPrincipal Student student) {
         return ResponseEntity.ok(studentProfileService.getAllEligibleApplications(student.getRollNo()));
+    }
+    @PostMapping("/uploadResume")
+    @PreAuthorize("hasAuthority('ROLE_STUDENT')")
+    public ResponseEntity<String> uploadResume(
+            @RequestParam("file") MultipartFile file,
+            @AuthenticationPrincipal Student student) {
+
+        return ResponseEntity.ok(
+                studentProfileService.uploadResume(file, student.getRollNo())
+        );
     }
 }

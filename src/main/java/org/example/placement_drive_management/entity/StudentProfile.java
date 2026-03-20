@@ -51,6 +51,7 @@ public class StudentProfile {
     private Integer passingYear;
     @Pattern(regexp = "^(MALE|FEMALE|OTHERS)$",message = "Gender should be MALE|FEMALE|OTHERS")
     private String gender;
+    private String resumeUrl;
     @OneToMany(mappedBy = "studentProfile",cascade = CascadeType.ALL,orphanRemoval = true)
     private List<Applications> applicationsList;
 }

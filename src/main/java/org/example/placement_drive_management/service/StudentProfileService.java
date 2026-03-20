@@ -8,6 +8,7 @@ import org.example.placement_drive_management.dto.StudentProfileDto;
 import org.example.placement_drive_management.entity.Applications;
 import org.example.placement_drive_management.entity.Student;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 

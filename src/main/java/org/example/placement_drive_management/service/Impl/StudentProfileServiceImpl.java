@@ -13,6 +13,7 @@ import org.example.placement_drive_management.service.StudentProfileService;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import lombok.RequiredArgsConstructor;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -29,12 +30,14 @@ public class StudentProfileServiceImpl implements StudentProfileService {
     private final ApplicationRepository applicationRepository;
     private final DriveRepository driveRepository;
     private final ApplicationRoundRepository applicationRoundRepository;
-    public StudentProfileServiceImpl(StudentProfileRepository studentProfileRepository, StudentRepository studentRepository,ApplicationRepository applicationRepository,DriveRepository driveRepository, ApplicationRoundRepository applicationRoundRepository) {
+    private final CloudinaryService cloudinaryService;
+    public StudentProfileServiceImpl(StudentProfileRepository studentProfileRepository, StudentRepository studentRepository,ApplicationRepository applicationRepository,DriveRepository driveRepository, ApplicationRoundRepository applicationRoundRepository, CloudinaryService cloudinaryService) {
         this.studentProfileRepository = studentProfileRepository;
         this.studentRepository = studentRepository;
         this.applicationRepository=applicationRepository;
         this.driveRepository = driveRepository;
         this.applicationRoundRepository=applicationRoundRepository;
+        this.cloudinaryService = cloudinaryService;
     }
 
     @Override
