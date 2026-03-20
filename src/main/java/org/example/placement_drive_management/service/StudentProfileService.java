@@ -17,5 +17,6 @@ public interface StudentProfileService {
     String updateStudentProfile(StudentProfileDto studentProfileDto,String rollNumberInContext);
     StudentProfileDto getStudentProfile(String rollNumberInContext);
     List<ApplicationsDto> getAllApplicationsForStudent(String rollNumberInContext);
+    List<ApplicationRoundDto> getAllApplicationRoundsForStudentAndDriveId(String driveId,String rollNumberInContext);
     String applyDrive(String driveId, String rollNoInContext);
 }

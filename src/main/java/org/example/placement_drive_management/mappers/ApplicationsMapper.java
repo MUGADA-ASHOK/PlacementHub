@@ -12,7 +12,8 @@ public class ApplicationsMapper {
                 applications.getStatus(),
                 applications.getCurrentRoundNumber(),
                 applications.getAppliedDate(),
-                false
+                false,
+                null
         );
     }
 }

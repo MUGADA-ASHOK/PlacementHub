@@ -60,4 +60,16 @@ public class StudentProfileController {
     public ResponseEntity<String> applyDrive(@PathVariable String driveId, @AuthenticationPrincipal Student student) {
         return ResponseEntity.status(HttpStatus.CREATED).body(studentProfileService.applyDrive(driveId,student.getRollNo()));
     }
+
+    @GetMapping("/allRounds/{driveId}")
+    @PreAuthorize("hasAuthority('ROLE_STUDENT')")
+    public ResponseEntity<List<ApplicationRoundDto>> getAllRoundsForDrive(@PathVariable String driveId,@AuthenticationPrincipal Student student) {
+        return ResponseEntity.ok(studentProfileService.getAllApplicationRoundsForStudentAndDriveId(driveId,student.getRollNo()));
+    }
+
+    @GetMapping("/allEligibleApplications")
+    @PreAuthorize("hasRole('ROLE_STUDENT')")
+    public ResponseEntity<List<ApplicationsDto>> getAllEligibleApplications(@AuthenticationPrincipal Student student) {
+        return ResponseEntity.ok(studentProfileService.getAllEligibleApplications(student.getRollNo()));
+    }
 }

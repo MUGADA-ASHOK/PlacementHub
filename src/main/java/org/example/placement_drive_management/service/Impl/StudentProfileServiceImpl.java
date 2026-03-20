@@ -1,10 +1,7 @@
 package org.example.placement_drive_management.service.Impl;
 
 import jakarta.transaction.Transactional;
-import org.example.placement_drive_management.dto.ApplicationRoundDto;
-import org.example.placement_drive_management.dto.ApplicationsDto;
-import org.example.placement_drive_management.dto.DriveRoundDto;
-import org.example.placement_drive_management.dto.StudentProfileDto;
+import org.example.placement_drive_management.dto.*;
 import org.example.placement_drive_management.entity.*;
 import org.example.placement_drive_management.exceptions.ResourceNotFoundException;
 import org.example.placement_drive_management.exceptions.UnauthorizedAccessException;
@@ -18,6 +15,7 @@ import org.springframework.stereotype.Service;
 import lombok.RequiredArgsConstructor;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -112,18 +110,41 @@ public class StudentProfileServiceImpl implements StudentProfileService {
     @Override
     public List<ApplicationsDto> getAllApplicationsForStudent(String  studentRollNo) {
         StudentProfile studentProfile= studentProfileRepository.findByStudentRollNo(studentRollNo).orElseThrow(()->new ResourceNotFoundException("Student with Roll No :"+studentRollNo+"not found"));
-        return studentProfile.getApplicationsList().stream().map(ApplicationsMapper::mapToApplicationDto).collect(Collectors.toList());
+        List<Applications> getApplications = studentProfile.getApplicationsList();
+        List<ApplicationsDto> applicationsDtos = new ArrayList<>();
+        for(Applications application: getApplications){
+            if(application.getStatus().equals("ELIGIBLE")) {
+                continue;
+            }
+            ApplicationsDto applicationsDto = ApplicationsMapper.mapToApplicationDto(application);
+            Drive drive = application.getDrive();
+            DriveInfoDto driveInfoDto = new DriveInfoDto();
+            driveInfoDto.setCompanyName(drive.getCompany().getCompanyName());
+            driveInfoDto.setRole(drive.getJobRole());
+            driveInfoDto.setPackageAmount(drive.getPackageOffered());
+            applicationsDto.setDriveInfo(driveInfoDto);
+            applicationsDtos.add(applicationsDto);
+        }
+        return applicationsDtos;
+    }
+
+    @Override
+    public List<ApplicationRoundDto> getAllApplicationRoundsForStudentAndDriveId(String driveId, String rollNumberInContext) {
+        List<ApplicationRound>applicationRounds = applicationRoundRepository.findAllRoundDetails(driveId, rollNumberInContext);
+        return applicationRounds.stream().map(ApplicationRoundMapper::maptoApplicationRoundDto).collect(Collectors.toList());
     }
 
     @Override
     public String applyDrive(String driveId,String rollNo) {
         Applications application = applicationRepository.findByDrive_DriveIdAndStudent_RollNo(driveId,rollNo).orElseThrow(()-> new ResourceNotFoundException("application not found"));
-        if(application.getStatus().equals("applied")) {
+        if(application.getStatus().equals("APPLIED")) {
             return "You have already applied this application";
         }
         Drive drive = driveRepository.findByDriveId(driveId).orElseThrow(()->new ResourceNotFoundException("Drive with DriveId not found"));
-        if(!LocalDate.now().isBefore(drive.getRegistrationEndDate()) || !LocalDate.now().isAfter(drive.getRegistrationStartDate())) {
-            return "the application time is over";
+        LocalDate start = drive.getRegistrationStartDate();
+        LocalDate end = drive.getRegistrationEndDate();
+        if(LocalDate.now().isBefore(start) || LocalDate.now().isAfter(end)) {
+            return "Application time is over";
         }
         application.setAppliedDate(LocalDate.now());
         application.setCurrentRoundNumber(0);

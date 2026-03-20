@@ -38,4 +38,21 @@ public interface ApplicationRoundRepository extends JpaRepository<ApplicationRou
             "ORDER BY ar.score DESC")
     List<ApplicationRound> findScoredStudentsOrderByScore(
             @Param("driveId") String driveId,
-            @Param("roundNo") Integer roundNo);}
+            @Param("roundNo") Integer roundNo);
+
+    List<ApplicationRound> findByApplicationId(Long id);
+
+    @Query("""
+    SELECT ar
+    FROM applicationRound ar
+    JOIN FETCH ar.application a
+    JOIN FETCH a.student s
+    JOIN FETCH ar.driveRound dr
+    WHERE dr.drive.driveId = :driveId
+    AND s.rollNo = :rollNo
+""")
+    List<ApplicationRound> findAllRoundDetails(
+            @Param("driveId") String driveId,
+            @Param("rollNo") String rollNo
+    );
+}

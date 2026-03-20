@@ -21,8 +21,8 @@ public class ApplicationsDto {
     private Integer currentRound;
 
     private LocalDate appliedAt;
-
     private Boolean offerAccepted;
+    private DriveInfoDto driveInfo;
 }
 
 
