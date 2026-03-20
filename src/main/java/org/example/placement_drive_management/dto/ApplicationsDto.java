@@ -1,10 +1,8 @@
 package org.example.placement_drive_management.dto;
-
 import lombok.*;
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-
+import org.example.placement_drive_management.dto.DriveInfoDto;
 @Getter
 @Setter
 @AllArgsConstructor
