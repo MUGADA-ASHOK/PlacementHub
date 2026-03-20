@@ -20,4 +20,6 @@ public interface StudentProfileService {
     List<ApplicationsDto> getAllApplicationsForStudent(String rollNumberInContext);
     List<ApplicationRoundDto> getAllApplicationRoundsForStudentAndDriveId(String driveId,String rollNumberInContext);
     String applyDrive(String driveId, String rollNoInContext);
+    List<ApplicationsDto> getAllEligibleApplications(String rollNumberInContext);
+    public String uploadResume(MultipartFile file, String rollNo);
 }

@@ -156,4 +156,49 @@ public class StudentProfileServiceImpl implements StudentProfileService {
         applicationRepository.save(application);
         return "application applied for "+driveId+" successfully";
     }
+
+    @Override
+    public List<ApplicationsDto> getAllEligibleApplications(String rollNo){
+        StudentProfile studentProfile= studentProfileRepository.findByStudentRollNo(rollNo).orElseThrow(()->new ResourceNotFoundException("Student with Roll No :"+rollNo+"not found"));
+        List<Applications> getApplications = studentProfile.getApplicationsList();
+        List<ApplicationsDto> applicationsDtos = new ArrayList<>();
+        for(Applications application: getApplications){
+            if(!application.getStatus().equals("ELIGIBLE")) {
+                continue;
+            }
+            ApplicationsDto applicationsDto = ApplicationsMapper.mapToApplicationDto(application);
+            Drive drive = application.getDrive();
+            DriveInfoDto driveInfoDto = new DriveInfoDto();
+            driveInfoDto.setCompanyName(drive.getCompany().getCompanyName());
+            driveInfoDto.setRole(drive.getJobRole());
+            driveInfoDto.setPackageAmount(drive.getPackageOffered());
+            applicationsDto.setDriveInfo(driveInfoDto);
+            applicationsDtos.add(applicationsDto);
+        }
+        return applicationsDtos;
+    }
+    @Override
+    public String uploadResume(MultipartFile file, String rollNo) {
+
+        // 🔥 validate file
+        if (file.getSize() > 2 * 1024 * 1024) {
+            throw new RuntimeException("File too large (max 2MB)");
+        }
+        if (!file.getContentType().equals("application/pdf")) {
+            throw new RuntimeException("Only PDF allowed");
+        }
+
+        StudentProfile profile = studentProfileRepository
+                .findByStudentRollNo(rollNo)
+                .orElseThrow(() -> new ResourceNotFoundException("Profile not found"));
+
+        String url = cloudinaryService.uploadFile(file);
+
+        // overwrite existing resume
+        profile.setResumeUrl(url);
+
+        studentProfileRepository.save(profile);
+
+        return url;
+    }
 }
