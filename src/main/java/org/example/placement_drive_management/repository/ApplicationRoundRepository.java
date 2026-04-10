@@ -11,13 +11,11 @@ import java.util.List;
 import java.util.Optional;
 
 public interface ApplicationRoundRepository extends JpaRepository<ApplicationRound, Long> {
-
-
     @Query("""
     SELECT 
         a.id as applicationId,
         s.rollNo as studentRollNo,
-        s.name as studentName,
+        CONCAT(s.name, ' ', s.surname) as studentName,
         sp.department as department,
         sp.currentCgpa as currentCgpa,
         s.mobileNo as mobileNo,
@@ -26,7 +24,7 @@ public interface ApplicationRoundRepository extends JpaRepository<ApplicationRou
         ar.score as score,
         ar.feedback as feedback,
         sp.resumeUrl as resume
-    FROM ApplicationRound ar
+    FROM applicationRound ar
     JOIN ar.application a
     JOIN a.student s
     JOIN a.studentProfile sp

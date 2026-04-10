@@ -9,6 +9,7 @@ import org.example.placement_drive_management.service.CompanyService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -73,6 +74,19 @@ public class CompanyController {
                 ApiResponse.success("Score published successfully", companyService.publishScoreForDriveRound(driveId, rollNo, roundNo, score, company.getCompanyId())));
     }
 
+    @PostMapping("/publishFeedback/{driveId}/{rollNo}/{roundNo}")
+    @PreAuthorize("hasAuthority('ROLE_COMPANY')")
+    public ResponseEntity<ApiResponse<String>> publishFeedback(
+            @PathVariable String driveId,
+            @PathVariable String rollNo,
+            @PathVariable Integer roundNo,
+            @RequestBody FeedbackRequest request,
+            @AuthenticationPrincipal Company company) {
+        return ResponseEntity.ok(ApiResponse.success("Feedback saved",
+                companyService.publishFeedback(driveId, rollNo, roundNo,
+                        request.getFeedback(), company.getCompanyId())));
+    }
+
     @PostMapping("/filterByTopK/{driveId}/{roundNo}/{topK}")
     @PreAuthorize("hasAuthority('ROLE_COMPANY')")
     public ResponseEntity<ApiResponse<String>> filterByTopKStudents(
@@ -103,5 +117,18 @@ public class CompanyController {
                                                                     @AuthenticationPrincipal Company company) {
         return ResponseEntity.ok(ApiResponse.success("count by cutOff marks: ",companyService.countFilterByCutOffMarks(driveId, roundNo, cutOff, company.getCompanyId())));
     }
-
+    /**
+     * GET /api/company/viewResume/{rollNo}
+     *
+     * Proxies the student resume PDF inline for company iframe preview.
+     * Company can only view resumes of students who applied to their drives
+     * (ownership verified in service layer via driveId + rollNo).
+     */
+    @GetMapping("/viewResume/{rollNo}")
+    @PreAuthorize("hasAuthority('ROLE_COMPANY')")
+    public ResponseEntity<byte[]> viewStudentResume(
+            @PathVariable String rollNo,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        return companyService.streamStudentResume(rollNo, userDetails.getUsername());
+    }
 }

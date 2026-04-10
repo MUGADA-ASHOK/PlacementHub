@@ -35,9 +35,9 @@ public class StudentMapper {
     public static StudentResponseDto maptoStudentResponseDto(Student student){
         return new StudentResponseDto(
                 student.getRollNo(),
-                student.getEmail(),
                 student.getName(),
                 student.getSurname(),
+                student.getEmail(),
                 student.getMobileNo()
         );
     }

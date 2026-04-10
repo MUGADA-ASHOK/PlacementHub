@@ -16,11 +16,10 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ApplicationRound {
-
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
-    @Pattern(regexp = "^(CLEARED|FAILED|PENDING)$",message = "Status should be CLEARED  | FAILED | PENDING")
+    @Pattern(regexp = "^(CLEARED|FAILED|PENDING|SELECTED)$",message = "Status should be CLEARED  | FAILED | PENDING|SELECTED")
     private String status;
     private Double score;
     private String feedback;

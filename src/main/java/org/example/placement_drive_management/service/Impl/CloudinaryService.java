@@ -1,11 +1,13 @@
 package org.example.placement_drive_management.service.Impl;
-
 import com.cloudinary.Cloudinary;
+import com.cloudinary.utils.ObjectUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
 import java.util.Map;
 
 @Service
@@ -14,20 +16,39 @@ public class CloudinaryService {
 
     private final Cloudinary cloudinary;
 
-    public String uploadFile(MultipartFile file) {
-        try {
-            Map uploadResult = cloudinary.uploader().upload(
-                    file.getBytes(),
-                    Map.of(
-                            "resource_type", "raw",   // 🔥 force correct type
-                            "folder", "resumes"
-                    )
-            );
+    /**
+     * Uploads PDF to Cloudinary as resource_type=raw (PDF stored intact,
+     * never transcoded). Uses rollNo as public_id so re-uploads overwrite
+     * the same file — no duplicate copies.
+     */
+    public String uploadResume(MultipartFile file, String rollNo) throws IOException {
+        Map<?, ?> result = cloudinary.uploader().upload(
+                file.getBytes(),
+                ObjectUtils.asMap(
+                        "resource_type", "raw",
+                        "folder",        "resumes",
+                        "public_id",     rollNo,
+                        "overwrite",     true,
+                        "use_filename",  true
+                )
+        );
+        return (String) result.get("secure_url");
+    }
 
-            return uploadResult.get("secure_url").toString();
-
-        } catch (IOException e) {
-            throw new RuntimeException("File upload failed");
+    public void deleteResume(String publicId) throws IOException {
+        cloudinary.uploader().destroy(
+                publicId,
+                ObjectUtils.asMap("resource_type", "raw")
+        );
+    }
+    /**
+     * Fetches the raw bytes of a resume PDF from Cloudinary by its URL.
+     * Used by the proxy endpoints to serve the file with Content-Disposition: inline.
+     */
+    public byte[] fetchResumeBytes(String resumeUrl) throws IOException {
+        URL url = new URL(resumeUrl);
+        try (InputStream in = url.openStream()) {
+            return in.readAllBytes();
         }
     }
 }

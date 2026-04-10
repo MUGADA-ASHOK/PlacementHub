@@ -10,10 +10,7 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @Builder
 public class DriveInfoDto {
-
     private String companyName;
     private String role;
     private Double packageAmount;
-
-    private LocalDate registrationEndDate;
 }

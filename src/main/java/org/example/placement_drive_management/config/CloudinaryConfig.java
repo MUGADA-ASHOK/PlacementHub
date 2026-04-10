@@ -25,7 +25,8 @@ public class CloudinaryConfig {
                 Map.of(
                         "cloud_name", cloudName,
                         "api_key", apiKey,
-                        "api_secret", apiSecret
+                        "api_secret", apiSecret,
+                        "secure",true
                 )
         );
     }

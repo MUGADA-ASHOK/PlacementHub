@@ -76,11 +76,27 @@ public class StudentProfileController {
     @PostMapping("/uploadResume")
     @PreAuthorize("hasAuthority('ROLE_STUDENT')")
     public ResponseEntity<String> uploadResume(
-            @RequestParam("resume") MultipartFile file,
+            @RequestParam("file") MultipartFile file,
             @AuthenticationPrincipal Student student) {
-
         return ResponseEntity.ok(
-                studentProfileService.uploadResume(file, student.getRollNo())
+                studentProfileService.uploadResume(file, student.getEmail())
         );
+    }
+    /**
+     * GET /api/student/profile/viewResume
+     *
+     * Proxies the student's resume PDF from Cloudinary and serves it with
+     * Content-Disposition: inline so the browser renders it inside an <iframe>
+     * instead of downloading it.
+     *
+     * This is needed because Cloudinary serves resource_type=raw files with
+     * Content-Disposition: attachment by default, which forces a download
+     * instead of an inline iframe preview.
+     */
+    @GetMapping("/profile/viewResume")
+    @PreAuthorize("hasAuthority('ROLE_STUDENT')")
+    public ResponseEntity<byte[]> viewResume(
+            @AuthenticationPrincipal Student student) {
+        return studentProfileService.streamResume(student.getUsername());
     }
 }

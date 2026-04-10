@@ -23,5 +23,6 @@ public class StudentProfileDto {
         private Boolean hasBacklogHistory;
         private Integer passingYear;
         private String gender;
+        private String resumeUrl;
 
 }

@@ -13,9 +13,14 @@ import org.example.placement_drive_management.mappers.DriveRoundMapper;
 import org.example.placement_drive_management.repository.*;
 import org.example.placement_drive_management.service.ApplicationRoundProjection;
 import org.example.placement_drive_management.service.CompanyService;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -31,7 +36,8 @@ public class CompanyServiceImpl implements CompanyService {
     private ApplicationRepository applicationRepository;
     private ApplicationRoundRepository applicationRoundRepository;
     private CompanyRepository companyRepository;
-
+    private CloudinaryService cloudinaryService;
+    private StudentProfileRepository studentProfileRepository;
 
     private void verifyDriveOwnership(String driveId, String companyId) {
         Drive drive = driveRepository.findByDriveId(driveId)
@@ -151,6 +157,21 @@ public class CompanyServiceImpl implements CompanyService {
         applicationRoundRepository.save(applicationRound);
         return "Score published for RollNo: " + rollNo + " | Round: " + roundNo;
     }
+    @Override
+    public String publishFeedback(String driveId, String rollNo,
+                                  Integer roundNo, String feedback,
+                                  String companyId) {
+        verifyDriveOwnership(driveId, companyId);
+        Applications application = applicationRepository
+                .findByDrive_DriveIdAndStudent_RollNo(driveId, rollNo)
+                .orElseThrow(() -> new ResourceNotFoundException("Application not found"));
+        ApplicationRound applicationRound = applicationRoundRepository
+                .findByApplication_IdAndDriveRound_RoundNumber(application.getId(), roundNo)
+                .orElseThrow(() -> new ResourceNotFoundException("Round not found"));
+        applicationRound.setFeedback(feedback);
+        applicationRoundRepository.save(applicationRound);
+        return "Feedback saved for " + rollNo;
+    }
 
     @Override
     public String filterTopKStudents(String driveId, Integer roundNo,
@@ -256,5 +277,41 @@ public class CompanyServiceImpl implements CompanyService {
             }
         }
         return count;
+    }
+    // Add cloudinaryService injection:
+// private final CloudinaryService cloudinaryService;  ← add to constructor
+
+    @Override
+    public ResponseEntity<byte[]> streamStudentResume(String rollNo, String companyEmail) {
+        // Find the company
+        Company company = companyRepository.findByEmail(companyEmail)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Company not found: " + companyEmail));
+
+        // Verify the student has actually applied to one of this company's drives
+        boolean hasApplication = applicationRepository
+                .existsByStudent_RollNoAndDrive_Company_CompanyId(
+                        rollNo, company.getCompanyId());
+        if (!hasApplication) {
+            throw new UnauthorizedAccessException(
+                    "No application found for this student in your drives.");
+        }
+
+        StudentProfile profile = studentProfileRepository.findByStudentRollNo(rollNo)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Profile not found for rollNo: " + rollNo));
+        if (profile.getResumeUrl() == null) {
+            return ResponseEntity.notFound().build();
+        }
+        try {
+            byte[] bytes = cloudinaryService.fetchResumeBytes(profile.getResumeUrl());
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_PDF);
+            String filename = rollNo + "_resume.pdf";
+            headers.add(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + filename + "\"");
+            return new ResponseEntity<>(bytes, headers, HttpStatus.OK);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to fetch resume: " + e.getMessage(), e);
+        }
     }
 }

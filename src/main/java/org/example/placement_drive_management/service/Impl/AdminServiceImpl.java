@@ -9,8 +9,13 @@ import org.example.placement_drive_management.mappers.*;
 import org.example.placement_drive_management.repository.*;
 import org.example.placement_drive_management.service.AdminService;
 import org.example.placement_drive_management.service.ApplicationRoundProjection;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -30,7 +35,7 @@ public class AdminServiceImpl implements AdminService {
     private DriveRoundRepository driveRoundRepository;
     private ApplicationRoundRepository applicationRoundRepository;
     private ApplicationRepository applicationRepository;
-
+    private CloudinaryService cloudinaryService;
     public void updateEligibilityFields(Eligibility eligibility,EligibilityDto dto) {
         eligibility.setMinimumCgpa(dto.getMinimumCgpa());
         eligibility.setMaxActiveBacklogs(dto.getMaxActiveBacklogs());
@@ -242,5 +247,39 @@ public class AdminServiceImpl implements AdminService {
         driveRepository.delete(drive);
 
         return "Successfully Deleted Drive with ID " + driveId;
+    }
+
+    @Override
+    public String deleteAdmin(Long id) {
+        adminRepository.deleteById(id);
+        return  "Successfully Deleted Admin";
+    }
+
+    @Override
+    public List<AdminDto> getAllAdmins() {
+        List<Admin> admins = adminRepository.findAll();
+        return admins.stream().filter(admin-> !admin.getEmail().equals("superAdmin@anits.edu.in")).map(admin-> AdminMapper.mapToAdminDto(admin)).collect(Collectors.toList());
+    }
+    // Add cloudinaryService injection:
+// private final CloudinaryService cloudinaryService;  ← add to constructor
+
+    @Override
+    public ResponseEntity<byte[]> streamStudentResume(String rollNo) {
+        StudentProfile profile = studentProfileRepository.findByStudentRollNo(rollNo)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Profile not found for rollNo: " + rollNo));
+        if (profile.getResumeUrl() == null) {
+            return ResponseEntity.notFound().build();
+        }
+        try {
+            byte[] bytes = cloudinaryService.fetchResumeBytes(profile.getResumeUrl());
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_PDF);
+            String filename = rollNo + "_resume.pdf";
+            headers.add(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + filename + "\"");
+            return new ResponseEntity<>(bytes, headers, HttpStatus.OK);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to fetch resume: " + e.getMessage(), e);
+        }
     }
 }

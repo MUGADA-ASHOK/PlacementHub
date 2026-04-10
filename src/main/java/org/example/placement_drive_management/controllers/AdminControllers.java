@@ -75,12 +75,12 @@ public class AdminControllers {
     public ResponseEntity<List<ApplicationsDto>> getAllApplicationsForStudent(@PathVariable String rollNo) {
         return ResponseEntity.ok(adminService.getAllApplicationsForaStudent(rollNo));
     }
-    @GetMapping("/closeDrive/{drivveId}")
+    @PutMapping("/closeDrive/{drivveId}")
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_SUPER_ADMIN')")
     public ResponseEntity<String> closeDrive(@PathVariable("drivveId") String drivveId) {
         return ResponseEntity.ok(adminService.closeDrive(drivveId));
     }
-    @GetMapping("/allActiveDrives")
+    @GetMapping("/getAllActiveDrives")
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_SUPER_ADMIN')")
     public ResponseEntity<List<DriveDto>> getAllActiveDrives() {
         return ResponseEntity.ok(adminService.viewAllActiveDrives());
@@ -116,10 +116,23 @@ public class AdminControllers {
     public  ResponseEntity<List<ApplicationRoundProjection>> getApplicantsForDriveRound(@PathVariable String driveId, @PathVariable Integer roundNo) {
         return ResponseEntity.ok(adminService.getApplicantsForDriveRound(driveId,roundNo));
     }
-    @GetMapping("/deleteDrive/{driveId}")
+    @DeleteMapping("/deleteDrive/{driveId}")
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_SUPER_ADMIN')")
     public ResponseEntity<String> deleteDrive(@PathVariable("driveId") String driveId) {
         return ResponseEntity.ok(adminService.deleteDrive(driveId));
     }
+    /**
+     * GET /api/admin/student/{rollNo}/viewResume
+     *
+     * Proxies the student's resume PDF and serves it inline (not as download).
+     * Used by admin/super-admin iframe preview.
+     */
+    @GetMapping("/student/{rollNo}/viewResume")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_SUPER_ADMIN')")
+    public ResponseEntity<byte[]> viewStudentResume(
+            @PathVariable String rollNo) {
+        return adminService.streamStudentResume(rollNo);
+    }
+
 
 }

@@ -28,4 +28,6 @@ public interface ApplicationRepository extends JpaRepository<Applications, Long>
     @Modifying
     @Transactional
     void deleteByDrive_DriveId(String driveId);
+    boolean existsByStudent_RollNoAndDrive_Company_CompanyId(
+            String rollNo, String companyId);
 }

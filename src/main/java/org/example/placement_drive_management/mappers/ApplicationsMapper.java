@@ -5,15 +5,14 @@ import org.example.placement_drive_management.entity.Applications;
 
 public class ApplicationsMapper {
     public static ApplicationsDto mapToApplicationDto(Applications applications) {
-        return new ApplicationsDto(
-                applications.getId(),
-                applications.getStudent().getRollNo(),
-                applications.getDrive().getDriveId(),
-                applications.getStatus(),
-                applications.getCurrentRoundNumber(),
-                applications.getAppliedDate(),
-                false,
-                null
-        );
+        ApplicationsDto applicationsDto = new ApplicationsDto();
+        applicationsDto.setId(applications.getId());
+        applicationsDto.setStudentRollNo(applications.getStudent().getRollNo());
+        applicationsDto.setDriveId(applications.getDrive().getDriveId());
+        applicationsDto.setStatus(applications.getStatus());
+        applicationsDto.setCurrentRound(applications.getCurrentRoundNumber());
+        applicationsDto.setAppliedAt(applications.getAppliedDate());
+        applicationsDto.setOfferAccepted(false);
+        return applicationsDto;
     }
 }
