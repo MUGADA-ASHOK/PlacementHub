@@ -15,6 +15,14 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
+@Table(
+        indexes = {
+                @Index(name = "idx_application_round_application_id", columnList = "application_id"),
+                @Index(name = "idx_application_round_drive_round_id", columnList = "drive_round_id"),
+                @Index(name = "idx_application_drive_round", columnList = "application_id,drive_round_id"),
+                @Index(name = "idx_application_drive_round_status", columnList = "drive_round_id,status"),
+        }
+)
 public class ApplicationRound {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)

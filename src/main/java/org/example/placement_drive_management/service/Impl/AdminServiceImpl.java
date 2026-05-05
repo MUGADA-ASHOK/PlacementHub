@@ -3,12 +3,17 @@ package org.example.placement_drive_management.service.Impl;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.example.placement_drive_management.dto.*;
+import org.example.placement_drive_management.dto.auth.ApiResponse;
 import org.example.placement_drive_management.entity.*;
 import org.example.placement_drive_management.exceptions.ResourceNotFoundException;
 import org.example.placement_drive_management.mappers.*;
 import org.example.placement_drive_management.repository.*;
 import org.example.placement_drive_management.service.AdminService;
 import org.example.placement_drive_management.service.ApplicationRoundProjection;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -45,12 +50,16 @@ public class AdminServiceImpl implements AdminService {
         eligibility.setHasHistoryBacklogs(dto.getHasHistoryBacklogs());
     }
     @Override
-    public List<StudentResponseDto> getAllStudents() {
-        return studentRepository.findAll().stream().map((students  )-> StudentMapper.maptoStudentResponseDto(students)).collect(Collectors.toList());
+    public PageResponse<StudentResponseDto> getAllStudents(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("rollNo").ascending());
+        Page<StudentResponseDto> studentResponseDtos = studentRepository.findAll(pageable).map(student->StudentMapper.maptoStudentResponseDto(student));
+        return PageMapper.mapToPageResponse(studentResponseDtos);
     }
     @Override
-    public List<StudentProfileDto> getAllProfiles() {
-        return studentProfileRepository.findAll().stream().map(StudentProfileMapper::maptoStudentProfileDto).collect(Collectors.toList());
+    public PageResponse<StudentProfileDto> getAllProfiles(int page,int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("rollNo").ascending());
+        Page<StudentProfileDto>profiles = studentProfileRepository.findAll(pageable).map(StudentProfileMapper::maptoStudentProfileDto);
+        return PageMapper.mapToPageResponse(profiles);
     }
     @Override
     public StudentProfileDto getStudentProfileByRollNo(String rollNo) {
@@ -156,20 +165,23 @@ public class AdminServiceImpl implements AdminService {
     }
 
     @Override
-    public List<DriveDto> getAllDrives(String companyId) {
-        List<Drive> drives=companyRepository.findByCompanyId(companyId).orElseThrow(()->new ResourceNotFoundException("Comapny with companyId "+companyId +" not found")).getDrives();
-        return drives.stream().map(DriveMapper::maptoDriveDto).collect(Collectors.toList());
+    public PageResponse<DriveDto> getAllDrives(String companyId,int page,int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<DriveDto> drives = driveRepository.findByCompany_CompanyId(companyId,pageable).map(DriveMapper::maptoDriveDto);
+        return PageMapper.mapToPageResponse(drives);
     }
     @Override
-    public List<CompanyDto> getAllCompanies() {
-        List<Company>companies = companyRepository.findAll();
-        return companies.stream().map(company -> CompanyMapper.mapCompanyToDto(company)).collect(Collectors.toList());
+    public PageResponse<CompanyDto> getAllCompanies(int  page,int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<CompanyDto>companies = companyRepository.findAll(pageable).map(company-> CompanyMapper.mapCompanyToDto(company));
+        return PageMapper.mapToPageResponse(companies);
     }
 
     @Override
-    public List<ApplicationsDto> getAllApplicationsForaStudent(String rollNo) {
-        List<Applications> applications = applicationRepository.findByStudent_RollNo(rollNo);
-        return applications.stream().map(ApplicationsMapper::mapToApplicationDto).collect(Collectors.toList());
+    public PageResponse<ApplicationsDto> getAllApplicationsForaStudent(String rollNo,int page,int size) {
+        Pageable pageable = PageRequest.of(page, size,Sort.by("appliedDate").descending());
+        Page<ApplicationsDto> applications = applicationRepository.findByStudent_RollNo(rollNo,pageable).map(ApplicationsMapper::mapToApplicationDto);
+        return PageMapper.mapToPageResponse(applications);
     }
 
     @Override
@@ -181,37 +193,33 @@ public class AdminServiceImpl implements AdminService {
     }
 
     @Override
-    public List<DriveRoundDto> getAllRounds(String driveId){
-        List<DriveRound> driveRounds = driveRoundRepository
-                .findByDrive_DriveId(driveId);
-        return driveRounds.stream()
-                .map(DriveRoundMapper::mapToDriveRoundDto)
-                .collect(Collectors.toList());
+    public PageResponse<DriveRoundDto> getAllRounds(String driveId, int page, int size){
+        Pageable pageable = PageRequest.of(page, size);
+        Page<DriveRoundDto> driveRounds = driveRoundRepository
+                .findByDrive_DriveId(driveId,pageable).map(driveRound ->  DriveRoundMapper.mapToDriveRoundDto(driveRound));
+        return PageMapper.mapToPageResponse(driveRounds);
     }
 
     @Override
-    public List<ApplicationsDto> getAllApplications(String driveId) {
-        List<Applications> applications = applicationRepository
-                .findByDrive_DriveId(driveId);
-        if (applications.isEmpty()) {
-            return Collections.emptyList();
-        }
-        return applications.stream()
-                .map(ApplicationsMapper::mapToApplicationDto)
-                .collect(Collectors.toList());
+    public PageResponse<ApplicationsDto> getAllApplications(String driveId, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size,Sort.by("appliedDate").descending());
+        Page<ApplicationsDto> applications = applicationRepository
+                .findByDrive_DriveId(driveId,pageable).map(application->ApplicationsMapper.mapToApplicationDto(application));
+        return PageMapper.mapToPageResponse(applications);
     }
 
     @Override
-    public List<ApplicationRoundProjection> getApplicantsForDriveRound(String driveId, Integer roundNo) {
-
-        List<ApplicationRoundProjection> roundEntries = applicationRoundRepository.findApplicantsProjected(driveId, roundNo);
-        return roundEntries;
+    public PageResponse<ApplicationRoundProjection> getApplicantsForDriveRound(String driveId, Integer roundNo, int page, int size) {
+        Pageable pageable = PageRequest.of(page,size,Sort.by("score").descending());
+        Page<ApplicationRoundProjection> roundEntries = applicationRoundRepository.findApplicantsProjected(driveId, roundNo,pageable);
+        return PageMapper.mapToPageResponse(roundEntries);
     }
 
     @Override
-    public List<DriveDto> viewAllActiveDrives() {
-        List<Drive> drives=driveRepository.findAllByIsActive(true);
-        return drives.stream().map(DriveMapper::maptoDriveDto).collect(Collectors.toList());
+    public PageResponse<DriveDto> viewAllActiveDrives(int page,int size) {
+        Pageable pageable = PageRequest.of(page, size,Sort.by("registrationStartDate").ascending());
+        Page<DriveDto> drives = driveRepository.findAllByIsActive(true,pageable).map(drive->DriveMapper.maptoDriveDto(drive));
+        return PageMapper.mapToPageResponse(drives);
     }
 
     @Override
@@ -256,9 +264,10 @@ public class AdminServiceImpl implements AdminService {
     }
 
     @Override
-    public List<AdminDto> getAllAdmins() {
-        List<Admin> admins = adminRepository.findAll();
-        return admins.stream().filter(admin-> !admin.getEmail().equals("superAdmin@anits.edu.in")).map(admin-> AdminMapper.mapToAdminDto(admin)).collect(Collectors.toList());
+    public PageResponse<AdminDto> getAllAdmins(int page,int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<AdminDto> admins = adminRepository.findAdmins(pageable).map(AdminMapper::mapToAdminDto);
+        return PageMapper.mapToPageResponse(admins);
     }
     // Add cloudinaryService injection:
 // private final CloudinaryService cloudinaryService;  ← add to constructor
@@ -281,5 +290,24 @@ public class AdminServiceImpl implements AdminService {
         } catch (IOException e) {
             throw new RuntimeException("Failed to fetch resume: " + e.getMessage(), e);
         }
+    }
+    @Override
+    public long countStudents() {
+        return studentRepository.count();
+    }
+
+    @Override
+    public long countCompanies() {
+        return companyRepository.count();
+    }
+
+    @Override
+    public long countActiveDrives() {
+        return driveRepository.countByIsActive(true);
+    }
+
+    @Override
+    public long countAdmins() {
+        return adminRepository.count();
     }
 }

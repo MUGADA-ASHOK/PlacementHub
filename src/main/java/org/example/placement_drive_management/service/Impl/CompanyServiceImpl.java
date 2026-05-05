@@ -6,13 +6,14 @@ import org.example.placement_drive_management.dto.*;
 import org.example.placement_drive_management.entity.*;
 import org.example.placement_drive_management.exceptions.ResourceNotFoundException;
 import org.example.placement_drive_management.exceptions.UnauthorizedAccessException;
-import org.example.placement_drive_management.mappers.ApplicationRoundMapper;
-import org.example.placement_drive_management.mappers.ApplicationsMapper;
-import org.example.placement_drive_management.mappers.DriveMapper;
-import org.example.placement_drive_management.mappers.DriveRoundMapper;
+import org.example.placement_drive_management.mappers.*;
 import org.example.placement_drive_management.repository.*;
 import org.example.placement_drive_management.service.ApplicationRoundProjection;
 import org.example.placement_drive_management.service.CompanyService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -99,11 +100,10 @@ public class CompanyServiceImpl implements CompanyService {
     }
 
     @Override
-    public List<DriveDto> getAllDrives(String companyId) {
-        List<Drive> drives = driveRepository.findByCompany_CompanyId(companyId);
-        return drives.stream()
-                .map(DriveMapper::maptoDriveDto)
-                .collect(Collectors.toList());
+    public PageResponse<DriveDto> getAllDrives(String companyId, int page,int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("registrationEndDate").descending());
+        Page<DriveDto> drives = driveRepository.findByCompany_CompanyId(companyId,pageable).map(drive-> DriveMapper.maptoDriveDto(drive));
+        return PageMapper.mapToPageResponse(drives);
     }
 
     @Override
@@ -117,25 +117,23 @@ public class CompanyServiceImpl implements CompanyService {
     }
 
     @Override
-    public List<ApplicationsDto> getAllApplications(String driveId, String companyId) {
+    public PageResponse<ApplicationsDto> getAllApplications(String driveId, String companyId,int page,int size) {
         verifyDriveOwnership(driveId, companyId);
-        List<Applications> applications = applicationRepository
-                .findByDrive_DriveId(driveId);
-        if (applications.isEmpty()) {
-            return Collections.emptyList();
-        }
-        return applications.stream()
-                .map(ApplicationsMapper::mapToApplicationDto)
-                .collect(Collectors.toList());
+        Pageable pageable = PageRequest.of(page, size,Sort.by("appliedDate").ascending());
+        Page<ApplicationsDto> applications = applicationRepository
+                .findByDrive_DriveId(driveId,pageable).map(application->ApplicationsMapper.mapToApplicationDto(application));
+
+        return PageMapper.mapToPageResponse(applications);
     }
 
     @Override
-    public List<ApplicationRoundProjection> getApplicantsForDriveRound(
-            String driveId, Integer roundNo, String companyId) {
+    public PageResponse<ApplicationRoundProjection> getApplicantsForDriveRound(
+            String driveId, Integer roundNo, String companyId,int page,int size) {
         verifyDriveOwnership(driveId, companyId);
-        List<ApplicationRoundProjection> roundEntries = applicationRoundRepository
-                .findApplicantsProjected(driveId, roundNo);
-        return roundEntries;
+        Pageable pageable = PageRequest.of(page,size,Sort.by("score").descending());
+        Page<ApplicationRoundProjection> roundEntries = applicationRoundRepository
+                .findApplicantsProjected(driveId, roundNo,pageable);
+        return PageMapper.mapToPageResponse(roundEntries);
 
     }
 
@@ -313,5 +311,14 @@ public class CompanyServiceImpl implements CompanyService {
         } catch (IOException e) {
             throw new RuntimeException("Failed to fetch resume: " + e.getMessage(), e);
         }
+    }
+    @Override
+    public long countTotalDrives(String companyId) {
+        return driveRepository.countByCompany_CompanyId(companyId);
+    }
+
+    @Override
+    public long countActiveDrives(String companyId) {
+        return driveRepository.countByCompany_CompanyIdAndIsActive(companyId, true);
     }
 }

@@ -1,4 +1,5 @@
 package org.example.placement_drive_management.service;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.example.placement_drive_management.dto.*;
 import org.example.placement_drive_management.dto.auth.ApiResponse;
@@ -13,31 +14,36 @@ import java.util.List;
 import java.util.Optional;
 @Service
 public interface AdminService {
-    List<StudentResponseDto> getAllStudents();
+    PageResponse<StudentResponseDto> getAllStudents(int page, int size);
     StudentProfileDto getStudentProfileByRollNo(String rollNo);
     String createDrive(DriveDto driveDto);
     String createEligibility(EligibilityDto eligibilityDto);
     String updateEligibility(String driveId,EligibilityDto eligibilityDto);
-    List<StudentProfileDto> getAllProfiles();
+    PageResponse<StudentProfileDto> getAllProfiles(int page, int size);
     String publishDrivesToEligibleStudents(String driveId);
-    List<DriveDto> getAllDrives(String companyId);
-    List<CompanyDto> getAllCompanies();
-    List<ApplicationsDto> getAllApplicationsForaStudent(String rollNo);
+    PageResponse<DriveDto> getAllDrives(String companyId,int page, int size);
+    PageResponse<CompanyDto> getAllCompanies(int page,int size);
+    PageResponse<ApplicationsDto> getAllApplicationsForaStudent(String rollNo,int page,int size);
     String closeDrive(String driveId);
 
-    List<DriveRoundDto> getAllRounds(String driveId);  // ← added companyId
+    PageResponse<DriveRoundDto> getAllRounds(String driveId, int page, int size);  // ← added companyId
 
-    List<ApplicationsDto> getAllApplications(String driveId);
+    PageResponse<ApplicationsDto> getAllApplications(String driveId, int  page, int size);
 
-    List<ApplicationRoundProjection> getApplicantsForDriveRound(String driveId, Integer roundNo);  // ← added companyId
-    List<DriveDto>viewAllActiveDrives();
+    PageResponse<ApplicationRoundProjection> getApplicantsForDriveRound(String driveId, Integer roundNo, int page, int size);  // ← added companyId
+    PageResponse<DriveDto>viewAllActiveDrives(int page, int size);
     String removeDrive(String driveId);
     String extendDriveApplication(String driveId, LocalDate localDate);
     String deleteDrive(String driveId);
     String deleteAdmin(Long id);
-    List<AdminDto> getAllAdmins();
+    PageResponse<AdminDto> getAllAdmins(int page,int size);
 
 
     // add to interface:
     ResponseEntity<byte[]> streamStudentResume(String rollNo);
+    // Dashboard counts
+    long countStudents();
+    long countCompanies();
+    long countActiveDrives();
+    long countAdmins();
 }

@@ -18,14 +18,16 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
+@Table(
+indexes = {
+        @Index(name = "idx_admin_name",columnList = "name")
+})
 public class Admin implements UserDetails {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
     private String name;
-
     @Column(unique = true)
     private String email;
 

@@ -10,7 +10,9 @@ import lombok.Setter;
 @Getter
 @Setter
 @Entity
-@Table
+@Table(indexes = {
+        @Index(name = "idx_eligibility_drive_id",columnList = "drive_id")
+})
 @AllArgsConstructor
 @NoArgsConstructor
 public class Eligibility {
@@ -29,6 +31,6 @@ public class Eligibility {
     private String gender;
     private Boolean hasHistoryBacklogs;
     @OneToOne
-    @JoinColumn(name = "drive_id",referencedColumnName = "driveId",nullable = false)
+    @JoinColumn(name = "drive_id",referencedColumnName = "drive_id",nullable = false)
     private Drive drive;
 }

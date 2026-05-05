@@ -36,7 +36,7 @@ public class Student implements UserDetails {
     private String mobileNo;
     @NotNull
     @Pattern(regexp = "^[A-Za-z0-9._%+-]+@anits\\.edu\\.in$",message = "Enter the valid college email")
-    @Column(length=100)
+    @Column(length=100,unique = true)
     private String email;
     @NotNull
     @Column(length=256)

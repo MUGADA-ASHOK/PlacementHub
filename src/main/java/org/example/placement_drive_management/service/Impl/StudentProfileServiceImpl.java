@@ -5,12 +5,13 @@ import org.example.placement_drive_management.dto.*;
 import org.example.placement_drive_management.entity.*;
 import org.example.placement_drive_management.exceptions.ResourceNotFoundException;
 import org.example.placement_drive_management.exceptions.UnauthorizedAccessException;
-import org.example.placement_drive_management.mappers.ApplicationRoundMapper;
-import org.example.placement_drive_management.mappers.ApplicationsMapper;
-import org.example.placement_drive_management.mappers.DriveRoundMapper;
-import org.example.placement_drive_management.mappers.StudentProfileMapper;
+import org.example.placement_drive_management.mappers.*;
 import org.example.placement_drive_management.repository.*;
 import org.example.placement_drive_management.service.StudentProfileService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -105,14 +106,15 @@ public class StudentProfileServiceImpl implements StudentProfileService {
         return StudentProfileMapper.maptoStudentProfileDto(studentProfile);
     }
     @Override
-    public List<ApplicationsDto> getAllApplicationsForStudent(String  studentRollNo) {
-        StudentProfile studentProfile= studentProfileRepository.findByStudentRollNo(studentRollNo).orElseThrow(()->new ResourceNotFoundException("Student with Roll No :"+studentRollNo+"not found"));
-        List<Applications> getApplications = studentProfile.getApplicationsList();
-        List<ApplicationsDto> applicationsDtos = new ArrayList<>();
-        for(Applications application: getApplications){
-            if(application.getStatus().equals("ELIGIBLE")) {
-                continue;
-            }
+    public PageResponse<ApplicationsDto> getAllApplicationsForStudent(String studentRollNo, int page, int size) {
+        studentRepository.findByRollNo(studentRollNo).orElseThrow(() -> new ResourceNotFoundException("Student with Roll No: " + studentRollNo + " not found"));
+        Pageable pageable = PageRequest.of(
+                page,
+                size,
+                Sort.by("appliedDate").descending()
+        );
+        Page<Applications> applicationsPage = applicationRepository.findByApplicationsByStudentRollNoByStatus(studentRollNo, pageable,"ELIGIBLE");
+        Page<ApplicationsDto> dtoPage = applicationsPage.map(application -> {
             ApplicationsDto applicationsDto = ApplicationsMapper.mapToApplicationDto(application);
             Drive drive = application.getDrive();
             DriveInfoDto driveInfoDto = new DriveInfoDto();
@@ -120,9 +122,9 @@ public class StudentProfileServiceImpl implements StudentProfileService {
             driveInfoDto.setRole(drive.getJobRole());
             driveInfoDto.setPackageAmount(drive.getPackageOffered());
             applicationsDto.setDriveInfo(driveInfoDto);
-            applicationsDtos.add(applicationsDto);
-        }
-        return applicationsDtos;
+            return applicationsDto;
+        });
+        return PageMapper.mapToPageResponse(dtoPage);
     }
 
     @Override
@@ -132,34 +134,40 @@ public class StudentProfileServiceImpl implements StudentProfileService {
     }
 
     @Override
-    public String applyDrive(String driveId,String rollNo) {
-        Applications application = applicationRepository.findByDrive_DriveIdAndStudent_RollNo(driveId,rollNo).orElseThrow(()-> new ResourceNotFoundException("application not found"));
-        if(application.getStatus().equals("APPLIED")) {
-            return "You have already applied this application";
-        }
-        Drive drive = driveRepository.findByDriveId(driveId).orElseThrow(()->new ResourceNotFoundException("Drive with DriveId not found"));
+    public String applyDrive(String driveId, String rollNo) {
+
+        Applications application = applicationRepository
+                .findEligibleApplicationForApply(driveId, rollNo)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Eligible application not found for driveId: " + driveId
+                ));
+
+        Drive drive = application.getDrive();
+
         LocalDate start = drive.getRegistrationStartDate();
         LocalDate end = drive.getRegistrationEndDate();
-        if(LocalDate.now().isBefore(start) || LocalDate.now().isAfter(end)) {
+
+        LocalDate today = LocalDate.now();
+
+        if (today.isBefore(start) || today.isAfter(end)) {
             return "Application time is over";
         }
-        application.setAppliedDate(LocalDate.now());
+
+        application.setAppliedDate(today);
         application.setCurrentRoundNumber(0);
         application.setStatus("APPLIED");
         application.setExternalApplied(false);
+
         applicationRepository.save(application);
-        return "application applied for "+driveId+" successfully";
+
+        return "Application applied for " + driveId + " successfully";
     }
 
     @Override
-    public List<ApplicationsDto> getAllEligibleApplications(String rollNo){
-        StudentProfile studentProfile= studentProfileRepository.findByStudentRollNo(rollNo).orElseThrow(()->new ResourceNotFoundException("Student with Roll No :"+rollNo+"not found"));
-        List<Applications> getApplications = studentProfile.getApplicationsList();
-        List<ApplicationsDto> applicationsDtos = new ArrayList<>();
-        for(Applications application: getApplications){
-            if(!application.getStatus().equals("ELIGIBLE")) {
-                continue;
-            }
+    public PageResponse<ApplicationsDto> getAllEligibleApplications(String rollNo,int page,int size){
+        studentRepository.findByRollNo(rollNo).orElseThrow(()->new ResourceNotFoundException("Student with Roll No :"+rollNo+"not found"));
+        Pageable pageable = PageRequest.of(page,size,Sort.by("appliedDate").descending());
+        Page<ApplicationsDto> applicationsDtos = applicationRepository.findByApplicationsByStudentRollNoByStatusEligible(rollNo,pageable,"ELIGIBLE").map(application -> {
             ApplicationsDto applicationsDto = ApplicationsMapper.mapToApplicationDto(application);
             Drive drive = application.getDrive();
             DriveInfoDto driveInfoDto = new DriveInfoDto();
@@ -167,9 +175,9 @@ public class StudentProfileServiceImpl implements StudentProfileService {
             driveInfoDto.setRole(drive.getJobRole());
             driveInfoDto.setPackageAmount(drive.getPackageOffered());
             applicationsDto.setDriveInfo(driveInfoDto);
-            applicationsDtos.add(applicationsDto);
-        }
-        return applicationsDtos;
+            return applicationsDto;
+        } );
+        return PageMapper.mapToPageResponse(applicationsDtos);
     }
     private Student getStudentByEmail(String email) {
         return studentRepository.findByEmail(email)
@@ -227,5 +235,14 @@ public class StudentProfileServiceImpl implements StudentProfileService {
         } catch (IOException e) {
             throw new RuntimeException("Failed to fetch resume: " + e.getMessage(), e);
         }
+    }
+    @Override
+    public long countEligibleDrives(String rollNo) {
+        return applicationRepository.countByStudent_RollNoAndStatus(rollNo, "ELIGIBLE");
+    }
+
+    @Override
+    public long countApplicationsByStatus(String rollNo, String status) {
+        return applicationRepository.countByStudent_RollNoAndStatus(rollNo, status);
     }
 }

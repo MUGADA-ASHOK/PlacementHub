@@ -32,9 +32,9 @@ public class CompanyController {
 
     @GetMapping("/getAllDrives")
     @PreAuthorize("hasAuthority('ROLE_COMPANY')")
-    public ResponseEntity<ApiResponse<List<DriveDto>>> getAllDrives(
-            @AuthenticationPrincipal Company company) {
-        return ResponseEntity.ok(ApiResponse.success("Drives fetched successfully", companyService.getAllDrives(company.getCompanyId())));
+    public ResponseEntity<ApiResponse<PageResponse<DriveDto>>> getAllDrives(
+            @AuthenticationPrincipal Company company,@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20")  int size) {
+        return ResponseEntity.ok(ApiResponse.success("Drives fetched successfully", companyService.getAllDrives(company.getCompanyId(),page,size)));
     }
 
     @GetMapping("/getRounds/{driveId}")
@@ -47,19 +47,21 @@ public class CompanyController {
 
     @GetMapping("/allApplications/{driveId}")
     @PreAuthorize("hasAuthority('ROLE_COMPANY')")
-    public ResponseEntity<ApiResponse<List<ApplicationsDto>>> getAllApplications(
+    public ResponseEntity<ApiResponse<PageResponse<ApplicationsDto>>> getAllApplications(
             @PathVariable String driveId,
-            @AuthenticationPrincipal Company company) {
-        return ResponseEntity.ok(ApiResponse.success("Applications fetched successfully", companyService.getAllApplications(driveId, company.getCompanyId())));
+            @AuthenticationPrincipal Company company,
+            @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20")   int size) {
+        return ResponseEntity.ok(ApiResponse.success("Applications fetched successfully", companyService.getAllApplications(driveId, company.getCompanyId(),page,size)));
     }
 
     @GetMapping("/allApplications/{driveId}/{roundNumber}")
     @PreAuthorize("hasAuthority('ROLE_COMPANY')")
-    public ResponseEntity<ApiResponse<List<ApplicationRoundProjection>>> getAllApplicationsByRound(
+    public ResponseEntity<ApiResponse<PageResponse<ApplicationRoundProjection>>> getAllApplicationsByRound(
             @PathVariable String driveId,
             @PathVariable Integer roundNumber,
-            @AuthenticationPrincipal Company company) {
-        return ResponseEntity.ok(ApiResponse.success("Round applicants fetched successfully", companyService.getApplicantsForDriveRound(driveId, roundNumber, company.getCompanyId())));
+            @AuthenticationPrincipal Company company,
+            @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size) {
+        return ResponseEntity.ok(ApiResponse.success("Round applicants fetched successfully", companyService.getApplicantsForDriveRound(driveId, roundNumber, company.getCompanyId(),page,size)));
     }
 
     @PostMapping("/publishScore/{driveId}/{rollNo}/{roundNo}/{score}")
@@ -130,5 +132,22 @@ public class CompanyController {
             @PathVariable String rollNo,
             @AuthenticationPrincipal UserDetails userDetails) {
         return companyService.streamStudentResume(rollNo, userDetails.getUsername());
+    }
+
+
+    @GetMapping("/drives/count")
+    @PreAuthorize("hasAuthority('ROLE_COMPANY')")
+    public ResponseEntity<ApiResponse<Long>> countTotalDrives(
+            @AuthenticationPrincipal Company company) {
+        return ResponseEntity.ok(ApiResponse.success("Total drives",
+                companyService.countTotalDrives(company.getCompanyId())));
+    }
+
+    @GetMapping("/activeDrives/count")
+    @PreAuthorize("hasAuthority('ROLE_COMPANY')")
+    public ResponseEntity<ApiResponse<Long>> countActiveDrives(
+            @AuthenticationPrincipal Company company) {
+        return ResponseEntity.ok(ApiResponse.success("Active drives",
+                companyService.countActiveDrives(company.getCompanyId())));
     }
 }

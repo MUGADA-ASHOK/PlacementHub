@@ -20,6 +20,9 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
+@Table(indexes = {
+        @Index(name = "idx_company_name",columnList = "company_name")
+})
 public class Company implements UserDetails {
 
     @Id
@@ -27,16 +30,16 @@ public class Company implements UserDetails {
     private Long id;
 
     @NotNull
-    @Column(unique = true)
+    @Column(name = "company_id", unique = true)
     private String companyId;
-
+    @Column(name = "company_name")
     private String companyName;
     private String website;
     private String industryType;
     private String description;
     private String externalApplicationLink;
 
-    @Column(unique = true)
+    @Column(name = "email", unique = true)
     private String email;
 
     private String password;

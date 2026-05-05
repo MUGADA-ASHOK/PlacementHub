@@ -3,6 +3,8 @@ package org.example.placement_drive_management.repository;
 import org.example.placement_drive_management.entity.ApplicationRound;
 import org.example.placement_drive_management.entity.Applications;
 import org.example.placement_drive_management.service.ApplicationRoundProjection;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -32,10 +34,9 @@ public interface ApplicationRoundRepository extends JpaRepository<ApplicationRou
     WHERE dr.drive.driveId = :driveId
     AND dr.roundNumber = :roundNo
 """)
-    List<ApplicationRoundProjection> findApplicantsProjected(
+    Page<ApplicationRoundProjection> findApplicantsProjected(
             @Param("driveId") String driveId,
-            @Param("roundNo") Integer roundNo);
-
+            @Param("roundNo") Integer roundNo , Pageable pageable);
 
     List<ApplicationRound> findByDriveRound_RoundNumber(Integer roundNumber);
     Optional<ApplicationRound> findByApplication_IdAndDriveRound_RoundNumber(

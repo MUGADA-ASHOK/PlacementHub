@@ -1,4 +1,5 @@
 package org.example.placement_drive_management.service;
+import org.example.placement_drive_management.dto.PageResponse;
 import org.springframework.http.ResponseEntity;
 import org.example.placement_drive_management.dto.StudentDto;
 import org.example.placement_drive_management.dto.StudentResponseDto;
@@ -15,7 +16,7 @@ public interface StudentService {
     StudentResponseDto getStudentById(Long id);*/
     StudentResponseDto createStudent(StudentDto studentDto);
     public Student getStudentByRollNo(String rollNo);
-    List<StudentResponseDto> getAllStudents();
+    PageResponse<StudentResponseDto> getAllStudents(int page,int size);
     // add to interface:
 }
 
