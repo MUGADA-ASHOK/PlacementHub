@@ -28,7 +28,7 @@ public class AuthController {
 
     private final AuthService authService;
 
-    // ── POST /api/auth/register/student ──────────────────────────
+    // ── POST /api/auth/register/student
 
     @PostMapping("/register/student")
     public ResponseEntity<ApiResponse<AuthResponse>> registerStudent(
