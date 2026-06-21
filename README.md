@@ -2,6 +2,7 @@
 
 This is the Spring Boot backend for the Placement Drive Management System. It handles authentication, role-based access control, drive lifecycle management, student eligibility matching, round-wise scoring, and resume storage. The frontend (React) talks to this over a REST API.
 
+live link : https://placementhubcom.vercel.app
 ---
 
 ## What this service does
